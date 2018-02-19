@@ -72,31 +72,43 @@ def check_input(arg_list):
         # Option
         if re.match('\-', arg):
             name = arg[1:]
+            #  print name
             # Validate option name
-            if name not in rules:
-                sys.stderr.write('Unrecognized option: ' + arg + '\n')
-                sys.exit(1)
-
-            rule = rules[name]
-
-            # Validate option value (if any)
-            if idx + 1 < n_args and arg_list[idx + 1][0] != '-':
-                raw_val = arg_list[idx + 1]
-                val = rule.match(raw_val)
-                if val:
-                    user_opts[name] = handlers[name](val.group(0))
-                    skip = True
-                else:
-                    sys.stderr.write('Bad value for \'' + arg + '\': '
-                                     + raw_val +'\n')
+            if is_number(name):
+                next
+            else:
+                if name not in rules:
+                    sys.stderr.write('Unrecognized options:' + arg + '\n')
                     sys.exit(1)
-            else:  # no-value option or last option
-                user_opts[name] = opts_defaults[name]
+
+                rule = rules[name]
+
+                # Validate option value (if any)
+                # assume that option name cannot be a  number
+                if idx + 1 < n_args and is_number(arg_list[idx + 1]):
+                    raw_val = arg_list[idx + 1]
+                    val = rule.match(raw_val)
+                    if val:
+                        user_opts[name] = handlers[name](val.group(0))
+                        skip = True
+                    else:
+                        sys.stderr.write('Bad value for \'' + arg + '\': '
+                                        + raw_val +'\n')
+                        sys.exit(1)
+                else:  # no-value option or last option
+                    user_opts[name] = opts_defaults[name]
         else:
             sys.stderr.write('Unrecognized option: ' + arg + '\n')
             sys.exit(1)
 
     return (pdbfh, user_opts)
+
+def is_number(n):
+    try:
+        float(n)
+    except ValueError:
+        return False
+    return True
 
 
 def _shift_pdb_residue(fhandle, opt_dict):
